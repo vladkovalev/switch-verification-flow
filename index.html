@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Switch Verification Flow — PPT-ready</title>
+  <style>
+    :root{
+      --bg:#070a12;
+      --text:#f3f6ff;
+      --muted:#c6cfef;
+      --line:rgba(255,255,255,.14);
+      --cyan:#22d3ee;
+      --violet:#a78bfa;
+      --green:#34d399;
+      --amber:#fbbf24;
+      --red:#fb7185;
+      --shadow: 0 22px 70px rgba(0,0,0,.48);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:var(--bg);
+    }
+
+    /* Sticky nav for authoring */
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      border-bottom:1px solid var(--line);
+      backdrop-filter: blur(10px);
+      background:rgba(7,10,18,.7);
+    }
+    .wrap{max-width:1400px; margin:0 auto; padding:14px 18px}
+    .topbarInner{display:flex; align-items:center; justify-content:space-between; gap:16px}
+    .brand{display:flex; align-items:center; gap:14px}
+    .logo{
+      width:40px;height:40px;border-radius:12px;
+      background:linear-gradient(135deg, rgba(34,211,238,.95), rgba(167,139,250,.9));
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      flex:0 0 auto;
+    }
+    .tag{display:inline-block; padding:3px 10px; border-radius:999px; border:1px solid var(--line); font-size:12px; color:var(--muted)}
+    .nav{display:flex; gap:10px; flex-wrap:wrap; font-size:13px; align-items:center}
+    .nav a{
+      padding:7px 11px; border:1px solid var(--line); border-radius:999px;
+      color:var(--text); opacity:.95; text-decoration:none;
+      background:rgba(13,23,51,.25);
+    }
+    .btn{
+      padding:7px 11px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(13,23,51,.55);
+      color:var(--text);
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    /* Slide pages */
+    .slides{
+      padding:18px;
+      display:grid;
+      gap:22px;
+      justify-content:center;
+    }
+    .slide{
+      width:min(1280px, 98vw);
+      aspect-ratio: 16 / 9;
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:
+        radial-gradient(1100px 640px at 10% 0%, rgba(34,211,238,.15), transparent 55%),
+        radial-gradient(900px 640px at 85% 10%, rgba(167,139,250,.16), transparent 58%),
+        radial-gradient(900px 700px at 50% 95%, rgba(52,211,153,.12), transparent 62%),
+        rgba(255,255,255,.02);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      padding:34px 38px;
+    }
+
+    /* Card styling inside slide */
+    h1{margin:.2rem 0 .6rem; font-size:44px}
+    h2{margin:0 0 12px; font-size:26px}
+    h3{margin:0 0 10px; font-size:20px}
+    .lead{color:var(--muted); font-size:22px; line-height:1.7}
+
+    .pillrow{display:flex; flex-wrap:wrap; gap:12px; margin-top:16px}
+    .pill{
+      font-size:15px; padding:10px 12px; border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(13,23,51,.45)
+    }
+
+    .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:16px}
+    .grid2{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:16px}
+    @media (max-width:980px){ .grid3,.grid2{grid-template-columns:1fr} }
+
+    .sub,.subcard{
+      background:rgba(13,23,51,.55);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+    }
+    .list{margin:0; padding-left:18px; color:var(--muted); line-height:1.75; font-size:20px}
+
+    .diagram{
+      width:100%;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(13,23,51,.35);
+      padding:12px;
+    }
+    .callout{
+      border:1px solid var(--line);
+      background:rgba(13,23,51,.32);
+      border-radius:18px;
+      padding:14px;
+      color:var(--muted);
+      line-height:1.75;
+      font-size:20px;
+      margin-top:12px;
+    }
+    code, pre{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+    code{color:#e5e7eb}
+    pre{
+      background:rgba(13,23,51,.55);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      overflow:auto;
+      color:#e5e7eb;
+      font-size:16px;
+      line-height:1.55;
+    }
+
+    .k{font-weight:900; color:var(--cyan)}
+    .k.violet{color:var(--violet)}
+    .k.green{color:var(--green)}
+    .k.amber{color:var(--amber)}
+    .k.red{color:var(--red)}
+
+    /* slide footer */
+    .slideNo{
+      position:absolute; right:20px; bottom:14px;
+      color:rgba(255,255,255,.55);
+      font-size:13px;
+    }
+
+    /* Slide-only mode (hide topbar, reduce padding, maximize slide area) */
+    body.slideOnly .topbar{display:none}
+    body.slideOnly .slides{padding:10px}
+    body.slideOnly .slide{
+      width:min(1400px, 99vw);
+      padding:30px 34px;
+    }
+
+    /* Printing off for PPT-ready */
+    @media print {
+      .topbar{display:none}
+      body{background:#fff}
+      .slide{page-break-after:always; break-after:page; box-shadow:none}
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar" id="topbar">
+  <div class="wrap">
+    <div class="topbarInner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <div class="tag">PPT-ready</div>
+          <div style="font-weight:900; margin-top:6px; font-size:16px">Switch Verification Flow</div>
+          <div style="color:var(--muted); font-size:13px">One slide per card (16:9)</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="#s1">Overview</a>
+        <a href="#s5">NetLab</a>
+        <a href="#s8">DebugLab-Lite</a>
+        <a href="#s11">DebugLab-Full</a>
+        <button class="btn" id="toggleSlideOnly" type="button">Slide-only mode</button>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<div class="slides">
+
+  <!-- Slide 1 -->
+  <section class="slide" id="s1">
+    <h1>Overview</h1>
+    <p class="lead">
+      We build a tiered verification and debug ecosystem for a
+      <span class="k">PCIe-attached device/ASIC</span> with an
+      <span class="k">x86_64 Intel/AMD management CPU</span>:
+      <span class="k">NetLab</span> for topology/integration and fast reproduction,
+      <span class="k green">DebugLab-Lite</span> for open-source waveform debug (Verilator + RTEdbg),
+      and <span class="k violet">DebugLab-Full</span> for the internal fidelity ladder ending with emulation as a last resort.
+    </p>
+
+    <div class="pillrow">
+      <div class="pill"><b>Debug Portal</b>: gRPC</div>
+      <div class="pill"><b>Golden stimulus</b>: <code>transactions.parquet</code></div>
+      <div class="pill"><b>Compression</b>: ZSTD</div>
+      <div class="pill"><b>Row groups</b>: 128MB</div>
+      <div class="pill"><b>corr_id</b>: globally unique per run</div>
+      <div class="pill"><b>PCIe v1</b>: MMIO + MSI-X (DMA optional)</div>
+    </div>
+
+    <div class="callout">
+      <b>Core idea:</b> capture once (in NetLab), replay everywhere. Compare traces by <code>seq + corr_id</code>.
+      Escalate fidelity only when required, and capture waveforms only around the first divergence.
+    </div>
+    <div class="slideNo">1</div>
+  </section>
+
+  <!-- Slide 2 -->
+  <section class="slide" id="s2">
+    <h2>Goal &amp; why split the system</h2>
+    <div class="grid3">
+      <div class="sub">
+        <h3><span class="k">Goal</span></h3>
+        <ul class="list">
+          <li>Fast iteration in simulation-first environments</li>
+          <li>Replayable evidence across all stages</li>
+          <li>Emulation only as a last resort</li>
+        </ul>
+      </div>
+      <div class="sub">
+        <h3><span class="k green">Why split</span></h3>
+        <ul class="list">
+          <li>NetLab scales to many nodes and scenarios</li>
+          <li>Lite provides waveforms with open tools</li>
+          <li>Full provides the internal fidelity ladder</li>
+        </ul>
+      </div>
+      <div class="sub">
+        <h3><span class="k violet">What makes it work</span></h3>
+        <ul class="list">
+          <li>gRPC Debug Portal (uniform control plane)</li>
+          <li>Parquet golden stimulus (uniform evidence)</li>
+          <li>corr_id anchors (uniform correlation)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <b>EDA vendor neutrality:</b> DebugLab-Full is designed to integrate with internal commercial stacks as needed.
+      Current deployments may use <b>Cadence</b>, <b>Synopsys</b>, and/or <b>Siemens</b> tooling (deployment-dependent).
+    </div>
+    <div class="slideNo">2</div>
+  </section>
+
+  <!-- Slide 3 -->
+  <section class="slide" id="s3">
+    <h2>Three subsystems (roles &amp; outputs)</h2>
+    <div class="grid3">
+      <div class="sub">
+        <h3><span class="k">NetLab</span> (GNS3)</h3>
+        <ul class="list">
+          <li>Topology + lifecycle (GNS3)</li>
+          <li>CPU VM (Ubuntu + SDK/SAI)</li>
+          <li>SIM node (SystemC LT/AT)</li>
+          <li><b>Output:</b> golden stimulus <code>transactions.parquet</code> + <code>run.json</code></li>
+        </ul>
+      </div>
+      <div class="sub">
+        <h3><span class="k green">DebugLab-Lite</span> (External)</h3>
+        <ul class="list">
+          <li>Replay stimulus into Verilator</li>
+          <li><b>Waveforms:</b> FST (GTKWave)</li>
+          <li><b>Semantics:</b> RTEdbg traces (+ optional VCD markers)</li>
+          <li><b>Output:</b> FST + observed Parquet</li>
+        </ul>
+      </div>
+      <div class="sub">
+        <h3><span class="k violet">DebugLab-Full</span> (Internal)</h3>
+        <ul class="list">
+          <li>Fidelity ladder: LT/AT → IA → CA → RTL sim</li>
+          <li>Acceleration (optional)</li>
+          <li>Emulation (last resort)</li>
+          <li><b>Output:</b> comparable Parquet + native wave DB on demand</li>
+        </ul>
+      </div>
+    </div>
+    <div class="slideNo">3</div>
+  </section>
+
+  <!-- Slide 4 -->
+  <section class="slide" id="s4">
+    <h2>Diagram: capture → replay → compare → minimal capture</h2>
+    <svg class="diagram" viewBox="0 0 980 520" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="#a78bfa" stop-opacity="0.95"/>
+        </linearGradient>
+      </defs>
+      <rect x="10" y="10" width="960" height="500" rx="18" fill="rgba(13,23,51,.22)" stroke="rgba(255,255,255,.14)"/>
+      <text x="30" y="52" fill="#f3f6ff" font-size="18" font-weight="900">Workflow</text>
+
+      <rect x="40" y="90" width="900" height="90" rx="16" fill="rgba(13,23,51,.65)" stroke="rgba(255,255,255,.14)"/>
+      <text x="62" y="125" fill="#22d3ee" font-size="15" font-weight="900">1) NetLab capture</text>
+      <text x="240" y="125" fill="#c6cfef" font-size="13">GNS3 tick-mode run produces golden stimulus</text>
+      <text x="62" y="155" fill="#c6cfef" font-size="13">Artifacts: run.json + transactions.parquet (ZSTD, 128MB) + optional RTEdbg</text>
+
+      <path d="M490 180 C490 220 490 220 490 240" stroke="url(#g1)" stroke-width="7" fill="none"/>
+      <text x="505" y="215" fill="#f3f6ff" font-size="12">replay</text>
+
+      <rect x="40" y="240" width="430" height="130" rx="16" fill="rgba(13,23,51,.65)" stroke="rgba(255,255,255,.14)"/>
+      <text x="62" y="275" fill="#34d399" font-size="15" font-weight="900">2) DebugLab-Lite</text>
+      <text x="62" y="305" fill="#c6cfef" font-size="13">Verilator + FST waveforms + RTEdbg semantics</text>
+      <text x="62" y="335" fill="#c6cfef" font-size="13">Observed transactions.parquet (cycle tb)</text>
+
+      <rect x="510" y="240" width="430" height="130" rx="16" fill="rgba(13,23,51,.65)" stroke="rgba(255,255,255,.14)"/>
+      <text x="532" y="275" fill="#a78bfa" font-size="15" font-weight="900">3) DebugLab-Full</text>
+      <text x="532" y="305" fill="#c6cfef" font-size="13">LT/AT → IA → CA → RTL sim → Acceleration → Emulation (last resort)</text>
+      <text x="532" y="335" fill="#c6cfef" font-size="13">Native wave DB on demand</text>
+
+      <rect x="40" y="390" width="900" height="90" rx="16" fill="rgba(13,23,51,.55)" stroke="rgba(255,255,255,.14)"/>
+      <text x="62" y="425" fill="#fbbf24" font-size="15" font-weight="900">Compare + focus</text>
+      <text x="62" y="455" fill="#c6cfef" font-size="13">Align by seq + corr_id → first_bad_corr_id → capture minimal wave window</text>
+    </svg>
+
+    <div class="callout">
+      <b>Decision summary:</b> we standardize the evidence (Parquet + corr_id) and the control plane (gRPC Debug Portal).
+      This keeps runs comparable across virtual platforms, SystemC models, RTL simulation, and emulation systems.
+    </div>
+    <div class="slideNo">4</div>
+  </section>
+
+  <!-- Slide 5 -->
+  <section class="slide" id="s5">
+    <h1>NetLab (GNS3)</h1>
+    <p class="lead">
+      NetLab uses <span class="k">GNS3</span> to orchestrate network topologies (links, switches, node lifecycle) and runs the control-plane
+      in a QEMU VM, while a separate simulation node models the ASIC/platform world. The key output is a
+      <span class="k">replayable golden stimulus</span> trace (<code>transactions.parquet</code>) that can be replayed in deeper debug systems.
+    </p>
+
+    <div class="pillrow">
+      <div class="pill"><b>Orchestration</b>: GNS3</div>
+      <div class="pill"><b>Compute</b>: QEMU/KVM (CPU VM)</div>
+      <div class="pill"><b>Model</b>: SystemC LT/AT (SIM node)</div>
+      <div class="pill"><b>Ports</b>: mgmt0 + swp1..8</div>
+      <div class="pill"><b>PCIe v1</b>: ivshmem transport</div>
+      <div class="pill"><b>Trace</b>: Parquet ZSTD (128MB groups)</div>
+    </div>
+
+    <div class="grid3">
+      <div class="sub">
+        <h3 style="color:var(--cyan)">What GNS3 adds</h3>
+        <ul class="list">
+          <li>Visual topology + lifecycle control</li>
+          <li>Internal virtual switching (bridges/OVS)</li>
+          <li>Shareable lab projects</li>
+        </ul>
+      </div>
+      <div class="sub">
+        <h3 style="color:var(--green)">What NetLab produces</h3>
+        <ul class="list">
+          <li><code>transactions.parquet</code> (golden stimulus)</li>
+          <li><code>run.json</code> manifest + logs</li>
+          <li>Optional semantic traces (RTEdbg)</li>
+        </ul>
+      </div>
+      <div class="sub">
+        <h3 style="color:var(--amber)">What NetLab avoids</h3>
+        <ul class="list">
+          <li>Always-on waveform capture</li>
+          <li>Immediate dependency on emulation</li>
+          <li>Full cycle-accurate signoff</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <b>Tick/Tack packaging:</b> Start with <b>tick</b> (two visible nodes: CPU + SIM) for modular development.
+      When stable, package as <b>tack</b> (one wrapper node) without changing external ports or debug entrypoints.
+    </div>
+    <div class="slideNo">5</div>
+  </section>
+
+  <!-- Slide 6 -->
+  <section class="slide" id="s6">
+    <h2>Tick vs Tack (how it appears in GNS3)</h2>
+    <div class="callout" style="margin-top:0">
+      Same ports + same debug entrypoints; different packaging
+    </div>
+
+    <svg class="diagram" viewBox="0 0 980 560" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gTick" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#6ee7ff" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="#a78bfa" stop-opacity="0.95"/>
+        </linearGradient>
+        <linearGradient id="gTack" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#34d399" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="#fbbf24" stop-opacity="0.9"/>
+        </linearGradient>
+      </defs>
+
+      <rect x="10" y="10" width="960" height="540" rx="18" fill="rgba(16,27,63,.18)" stroke="rgba(255,255,255,.14)"/>
+      <text x="30" y="52" fill="#f3f6ff" font-size="18" font-weight="900">Packaging modes</text>
+
+      <rect x="40" y="90" width="440" height="420" rx="16" fill="rgba(16,27,63,.40)" stroke="rgba(255,255,255,.14)"/>
+      <text x="62" y="128" fill="#6ee7ff" font-size="16" font-weight="900">Tick (2 visible nodes)</text>
+      <text x="62" y="154" fill="#c9d1ee" font-size="13">Best for development and independent evolution of CPU vs SIM.</text>
+
+      <rect x="70" y="190" width="380" height="125" rx="14" fill="rgba(16,27,63,.72)" stroke="rgba(255,255,255,.14)"/>
+      <text x="92" y="224" fill="#6ee7ff" font-size="15" font-weight="900">tick-switch-cpu</text>
+      <text x="92" y="252" fill="#c9d1ee" font-size="13">QEMU VM: Ubuntu + SDK/SAI + probe</text>
+      <text x="92" y="278" fill="#c9d1ee" font-size="13">GNS3 ports: mgmt0 + swp1..8</text>
+
+      <rect x="70" y="345" width="380" height="125" rx="14" fill="rgba(16,27,63,.72)" stroke="rgba(255,255,255,.14)"/>
+      <text x="92" y="379" fill="#a78bfa" font-size="15" font-weight="900">tick-switch-sim</text>
+      <text x="92" y="407" fill="#c9d1ee" font-size="13">SystemC LT/AT + platform models</text>
+      <text x="92" y="433" fill="#c9d1ee" font-size="13">Writes transactions.parquet + serves gRPC</text>
+
+      <path d="M260 315 C260 330 260 330 260 345" stroke="url(#gTick)" stroke-width="7" fill="none"/>
+      <text x="282" y="336" fill="#c9d1ee" font-size="12">ivshmem PCI</text>
+
+      <rect x="500" y="90" width="440" height="420" rx="16" fill="rgba(16,27,63,.40)" stroke="rgba(255,255,255,.14)"/>
+      <text x="522" y="128" fill="#34d399" font-size="16" font-weight="900">Tack (1 wrapper node)</text>
+      <text x="522" y="154" fill="#c9d1ee" font-size="13">Best for users, demos, CI: one icon, same external behavior.</text>
+
+      <rect x="530" y="210" width="380" height="230" rx="16" fill="rgba(16,27,63,.72)" stroke="rgba(255,255,255,.14)"/>
+      <text x="552" y="246" fill="#fbbf24" font-size="15" font-weight="900">tack-switch</text>
+      <text x="552" y="274" fill="#c9d1ee" font-size="13">Wrapper launches CPU + SIM internally</text>
+      <text x="552" y="302" fill="#c9d1ee" font-size="13">Same GNS3 ports: mgmt0 + swp1..8</text>
+      <text x="552" y="330" fill="#c9d1ee" font-size="13">Same Debug Portal endpoints</text>
+      <text x="552" y="358" fill="#c9d1ee" font-size="13">Same trace schema and corr_id rules</text>
+
+      <path d="M450 510 C520 520 520 520 590 510" stroke="url(#gTack)" stroke-width="7" fill="none"/>
+      <text x="370" y="532" fill="#c9d1ee" font-size="12">No contract changes: only packaging changes</text>
+    </svg>
+
+    <div class="callout">
+      <b>Guideline:</b> develop and evolve functionality in <b>tick</b>. When interfaces and operations stabilize, ship <b>tack</b> to simplify consumption.
+    </div>
+    <div class="slideNo">6</div>
+  </section>
+
+  <!-- Slide 7 -->
+  <section class="slide" id="s7">
+    <h2>How to use (operator workflow)</h2>
+    <div class="callout" style="margin-top:0">
+      Fast reproduction → capture trace → replay downstream
+    </div>
+
+    <ol class="list" style="padding-left:22px">
+      <li><b>Build topology</b> in GNS3: management switch + dataplane switch(es) + nodes (CPU, SIM, clients).</li>
+      <li><b>Start SIM node</b> first (Debug Portal gRPC server, trace writer ready).</li>
+      <li><b>Start CPU node</b>, run the probe tool to exercise MMIO + MSI-X init path.</li>
+      <li><b>Capture trace</b> via Debug Portal (<code>StartTrace</code> / <code>StopTrace</code>) → <code>transactions.parquet</code>.</li>
+      <li><b>Escalate only if needed</b>: replay the same trace in DebugLab-Lite / DebugLab-Full.</li>
+    </ol>
+
+    <pre># Example (conceptual)
+TraceService.StartTrace(output_dir="run_001/",
+  trace_buses=["PCIE_MMIO","MSIX"],
+  parquet_compression="ZSTD",
+  parquet_row_group_size_mb=128)
+
+# Run probe/regression in tick-switch-cpu...
+
+TraceService.StopTrace()</pre>
+
+    <div class="callout">
+      <b>Best practice:</b> treat NetLab traces as “portable bug capsules”. A single captured run should be enough to drive deeper waveform-level debugging later.
+    </div>
+    <div class="slideNo">7</div>
+  </section>
+
+  <!-- Slide 8 -->
+  <section class="slide" id="s8">
+    <h1>DebugLab-Lite</h1>
+    <p class="lead">
+      The waveform-capable, open-source debug environment. It replays the same
+      <span class="k">golden stimulus</span> captured earlier (<code>transactions.parquet</code>)
+      into a Verilator RTL backend, producing <span class="k">FST waveforms</span> (GTKWave-friendly)
+      and correlating them with <span class="k">RTEdbg</span> semantic traces.
+    </p>
+
+    <div class="pillrow">
+      <div class="pill"><b>Waveforms</b>: FST</div>
+      <div class="pill"><b>Replay</b>: stimulus-only / stimulus+check</div>
+      <div class="pill"><b>Trace</b>: Parquet ZSTD (128MB groups)</div>
+      <div class="pill"><b>Control</b>: Debug Portal (gRPC)</div>
+      <div class="pill"><b>Semantics</b>: RTEdbg (+ optional VCD markers)</div>
+    </div>
+
+    <div class="grid2">
+      <div class="sub">
+        <div style="color:var(--cyan); font-weight:900; font-size:20px; margin-bottom:8px">Inputs</div>
+        <ul class="list">
+          <li><code>run.json</code> manifest</li>
+          <li><code>transactions.parquet</code> golden stimulus</li>
+          <li>Optional semantic trace configuration</li>
+        </ul>
+      </div>
+      <div class="sub">
+        <div style="color:var(--green); font-weight:900; font-size:20px; margin-bottom:8px">Outputs</div>
+        <ul class="list">
+          <li><code>waves.fst</code> waveforms</li>
+          <li>Observed <code>transactions.parquet</code> (cycle tb)</li>
+          <li>RTEdbg decoded reports (CSV/text)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <b>Key mechanism:</b> <code>corr_id</code> is globally unique per run and anchors transaction traces, semantic logs, and waveform windows.
+      This makes it practical to capture only a minimal region around <code>first_bad_corr_id</code>.
+    </div>
+    <div class="slideNo">8</div>
+  </section>
+
+  <!-- Slide 9 -->
+  <section class="slide" id="s9">
+    <h2>Diagram: evidence correlation (“one corr_id → many views”)</h2>
+    <div class="callout" style="margin-top:0">Designed for 16:9 viewing</div>
+
+    <svg class="diagram" viewBox="0 0 980 520" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gA" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="#34d399" stop-opacity="0.95"/>
+        </linearGradient>
+        <linearGradient id="gB" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#a78bfa" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity="0.75"/>
+        </linearGradient>
+      </defs>
+
+      <rect x="10" y="10" width="960" height="500" rx="18" fill="rgba(13,23,51,.22)" stroke="rgba(255,255,255,.14)"/>
+      <text x="30" y="52" fill="#f3f6ff" font-size="18" font-weight="900">corr_id anchored correlation</text>
+
+      <rect x="40" y="88" width="900" height="110" rx="16" fill="rgba(13,23,51,.68)" stroke="rgba(255,255,255,.14)"/>
+      <text x="62" y="122" fill="#22d3ee" font-size="15" font-weight="900">transactions.parquet</text>
+      <text x="62" y="150" fill="#c2cbed" font-size="13">MMIO + MSI-X stimulus/expected + observed responses, ordered by seq; corr_id globally unique</text>
+      <text x="62" y="176" fill="#c2cbed" font-size="13">Used for replay + compare → first_bad_corr_id</text>
+
+      <rect x="40" y="235" width="440" height="240" rx="16" fill="rgba(13,23,51,.68)" stroke="rgba(255,255,255,.14)"/>
+      <text x="62" y="270" fill="#34d399" font-size="15" font-weight="900">RTEdbg semantic traces</text>
+      <text x="62" y="300" fill="#c2cbed" font-size="13">Firmware intent, timing markers, state transitions</text>
+      <text x="62" y="328" fill="#c2cbed" font-size="13">Decoding on host → CSV/text; optional VCD markers</text>
+
+      <rect x="500" y="235" width="440" height="240" rx="16" fill="rgba(13,23,51,.68)" stroke="rgba(255,255,255,.14)"/>
+      <text x="522" y="270" fill="#a78bfa" font-size="15" font-weight="900">FST waveforms (Verilator)</text>
+      <text x="522" y="300" fill="#c2cbed" font-size="13">GTKWave-friendly; capture windows selected by corr_id range</text>
+      <text x="522" y="328" fill="#c2cbed" font-size="13">Signal profiles: minimal / pcie / full</text>
+
+      <path d="M490 198 C490 220 320 220 260 235" stroke="url(#gA)" stroke-width="7" fill="none"/>
+      <path d="M490 198 C490 220 660 220 720 235" stroke="url(#gB)" stroke-width="7" fill="none"/>
+      <text x="430" y="222" fill="#f3f6ff" font-size="12">corr_id anchors</text>
+    </svg>
+
+    <div class="callout">
+      <b>Practical result:</b> you avoid “always-on full wave capture”. First compare traces, then capture only the failing corr_id window.
+    </div>
+    <div class="slideNo">9</div>
+  </section>
+
+  <!-- Slide 10 -->
+  <section class="slide" id="s10">
+    <h2>How to use (operator workflow)</h2>
+    <div class="callout" style="margin-top:0">Typical commands are driven via gRPC clients/CLI</div>
+
+    <ol class="list" style="padding-left:22px">
+      <li><b>Load</b> the golden stimulus trace.</li>
+      <li><b>Replay</b> (start with DMA ignored):</li>
+    </ol>
+    <pre>ReplayService.LoadStimulus(stimulus_uri=".../transactions.parquet",
+  mode=STIMULUS_PLUS_CHECK,
+  timing_policy=IGNORE_TIMING,
+  ignore_buses=["PCIE_DMA"])
+
+ReplayService.RunReplay()</pre>
+
+    <ol class="list" style="padding-left:22px" start="3">
+      <li>When mismatch occurs, fetch <code>first_bad_corr_id</code> from replay results.</li>
+      <li>Capture a minimal waveform window around that corr_id:</li>
+    </ol>
+    <pre>WaveformService.StartCapture(
+  window_corr_id_start=N-50,
+  window_corr_id_end=N+50,
+  format="FST",
+  signal_profile="pcie")</pre>
+
+    <div class="callout">
+      <b>Tip:</b> Keep the default waveform profile small. Expand signal sets only after you’ve localized the failure region.
+    </div>
+    <div class="slideNo">10</div>
+  </section>
+
+  <!-- Slide 11 -->
+  <section class="slide" id="s11">
+    <h1>DebugLab-Full</h1>
+    <p class="lead">
+      <b>Target:</b> PCIe-attached device/ASIC + x86_64 Intel/AMD management CPU.
+    </p>
+    <p class="lead">
+      DebugLab-Full is the high-fidelity environment that escalates through a structured model ladder:
+      <span class="k violet">SystemC LT/AT → IA → CA → RTL simulation → acceleration → emulation</span>.
+      The core workflow is <span class="k violet">replay + compare</span>:
+      replay the same golden stimulus, compare traces, and capture only a minimal waveform window around
+      <code>first_bad_corr_id</code> when emulation is unavoidable.
+    </p>
+
+    <div class="callout">
+      <b>Vendor note:</b> DebugLab-Full is architected to be <b>EDA-vendor agnostic</b>.
+      Commercial tool integration is <b>deployment-specific</b>; Cadence, Synopsys, and Siemens stacks are supported as examples below.
+    </div>
+
+    <div class="pillrow">
+      <div class="pill"><b>Common stimulus</b>: transactions.parquet</div>
+      <div class="pill"><b>Common control</b>: Debug Portal (gRPC)</div>
+      <div class="pill"><b>Compare key</b>: seq + corr_id</div>
+      <div class="pill"><b>Waveforms</b>: backend-native exports</div>
+      <div class="pill"><b>Goal</b>: minimize emulation usage</div>
+    </div>
+
+    <div class="grid3">
+      <div class="subcard">
+        <h3 style="color:var(--cyan)">What it reuses</h3>
+        <ul class="list">
+          <li>NetLab evidence bundles</li>
+          <li>Same Parquet schema v1</li>
+          <li>Same corr_id semantics</li>
+        </ul>
+      </div>
+      <div class="subcard">
+        <h3 style="color:var(--green)">What it adds</h3>
+        <ul class="list">
+          <li>IA/CA + deeper RTL simulation</li>
+          <li>Acceleration options</li>
+          <li>Native waveform databases (tool-specific)</li>
+        </ul>
+      </div>
+      <div class="subcard">
+        <h3 style="color:var(--red)">When to use emulation</h3>
+        <ul class="list">
+          <li>Only after simulation cannot resolve the bug</li>
+          <li>Only with a narrowed corr_id window</li>
+          <li>Only with trace-compare context attached</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <b>Operational rule:</b> every stage exports a comparable <code>transactions.parquet</code>.
+      Emulation is a targeted “surgical capture”, driven by trace-compare results.
+    </div>
+    <div class="slideNo">11</div>
+  </section>
+
+  <!-- Slide 12 -->
+  <section class="slide" id="s12">
+    <h2>Fidelity ladder + evidence loop (corr_id driven)</h2>
+    <p class="lead" style="font-size:20px">
+      Capture windows are driven by <b>corr_id</b>: replay into the next engine, export observed Parquet,
+      compare to find <code>first_bad_corr_id</code>, then capture the smallest possible waveform window around that region.
+    </p>
+
+    <div class="subcard">
+      <h3 style="color:var(--violet)">Fidelity ladder (conceptual)</h3>
+      <ul class="list">
+        <li><b>SystemC LT/AT</b> — fast reproduction + ordering/timing relationships</li>
+        <li><b>Instruction Accurate (IA)</b> — ISA correctness for embedded cores</li>
+        <li><b>Cycle Accurate (CA)</b> — timing-critical correctness for key blocks</li>
+        <li><b>RTL Simulation</b> — signal-level debug + waveforms</li>
+        <li><b>Acceleration (optional)</b> — higher throughput than pure RTL sim</li>
+        <li><b>Emulation (last resort)</b> — minimal capture window using <code>first_bad_corr_id</code></li>
+      </ul>
+    </div>
+
+    <div class="callout">
+      <b>Outcome:</b> emulation captures are smaller, faster, and more targeted; capacity is reserved for cases that truly require it.
+    </div>
+    <div class="slideNo">12</div>
+  </section>
+
+  <!-- Slide 13 -->
+  <section class="slide" id="s13">
+    <h2>How to use (escalation playbook)</h2>
+    <p class="lead" style="font-size:20px">
+      Same gRPC calls across engines. Start with the lowest-cost engine that can reproduce the issue, then escalate.
+    </p>
+
+    <ol class="list" style="padding-left:22px">
+      <li><b>Start</b> with a NetLab CEF bundle and pick the next backend (AT → IA → CA → RTL sim).</li>
+      <li><b>Load stimulus</b> (v1 starts with DMA ignored):</li>
+    </ol>
+
+    <pre>ReplayService.LoadStimulus(stimulus_uri=".../transactions.parquet",
+  mode=STIMULUS_PLUS_CHECK,
+  timing_policy=IGNORE_TIMING,
+  ignore_buses=["PCIE_DMA"])
+
+ReplayService.RunReplay()</pre>
+
+    <ol class="list" style="padding-left:22px" start="3">
+      <li><b>Compare</b> observed traces to find divergence: <code>first_bad_corr_id</code>.</li>
+      <li>If still unresolved, <b>run emulation</b> and capture only the corr_id window.</li>
+    </ol>
+
+    <div class="callout">
+      <b>Best practice:</b> treat wave capture as a targeted investigation tool. Use trace-compare as your “radar” to find where to look.
+    </div>
+    <div class="slideNo">13</div>
+  </section>
+
+  <!-- Slide 14 -->
+  <section class="slide" id="s14">
+    <h2>Vendor-specific integrations (deployment-dependent)</h2>
+    <p class="lead" style="font-size:20px">
+      This section maps vendor tool stacks onto the ladder. The architecture does not depend on the vendor; it depends on:
+      stimulus (<code>transactions.parquet</code>), correlation (<code>seq + corr_id</code>), uniform control (Debug Portal gRPC),
+      and minimal capture around <code>first_bad_corr_id</code>.
+    </p>
+
+    <div class="subcard">
+      <h3 style="color:var(--cyan)">Cadence stack (example)</h3>
+      <ul class="list">
+        <li><b>Stratus HLS</b>: derive RTL from SystemC/C++; support SystemC-based flows.</li>
+        <li><b>Virtual System Platform (VSP) + tlmgen</b>: automate SystemC TLM-2.0 peripheral/IP model creation.</li>
+        <li><b>Xcelium</b>: RTL simulation and emulation interaction hub.</li>
+        <li><b>Helium Platform</b>: virtual platform enablement and early software workflows.</li>
+      </ul>
+    </div>
+
+    <div class="subcard" style="margin-top:14px">
+      <h3 style="color:var(--green)">Synopsys stack (example)</h3>
+      <ul class="list">
+        <li><b>Platform Architect</b>: early architecture analysis/optimization (SystemC/TLM-style).</li>
+        <li><b>Virtualizer</b>: build and deploy virtual prototypes.</li>
+        <li><b>VCS</b>: RTL + SystemC mixed simulation/verification flows.</li>
+      </ul>
+    </div>
+
+    <div class="subcard" style="margin-top:14px">
+      <h3 style="color:var(--violet)">Siemens stack (example)</h3>
+      <ul class="list">
+        <li><b>Veloce</b>: emulation / prototyping / SW bring-up.</li>
+        <li><b>Questa</b>: RTL simulation / verification.</li>
+        <li><b>Catapult</b>: SystemC/C++ high-level synthesis and verification.</li>
+      </ul>
+    </div>
+
+    <div class="slideNo">14</div>
+  </section>
+
+</div>
+
+<script>
+  (function () {
+    const body = document.body;
+    const btn = document.getElementById('toggleSlideOnly');
+
+    if (!btn) {
+      console.error('Slide-only toggle button not found: #toggleSlideOnly');
+      return;
+    }
+
+    function setButtonLabel() {
+      btn.textContent = body.classList.contains('slideOnly')
+        ? 'Exit slide-only mode'
+        : 'Slide-only mode';
+    }
+
+    // Restore state from localStorage
+    try {
+      const saved = localStorage.getItem('svf_slideOnly');
+      if (saved === '1') body.classList.add('slideOnly');
+    } catch (_) {}
+
+    setButtonLabel();
+
+    btn.addEventListener('click', () => {
+      body.classList.toggle('slideOnly');
+      setButtonLabel();
+      try {
+        localStorage.setItem('svf_slideOnly', body.classList.contains('slideOnly') ? '1' : '0');
+      } catch (_) {}
+    });
+
+    // Keyboard shortcut: press "s" to toggle slide-only mode (ignore typing in inputs)
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() !== 's') return;
+      const t = e.target;
+      const isTypingTarget = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      if (isTypingTarget) return;
+
+      body.classList.toggle('slideOnly');
+      setButtonLabel();
+      try {
+        localStorage.setItem('svf_slideOnly', body.classList.contains('slideOnly') ? '1' : '0');
+      } catch (_) {}
+    });
+  })();
+</script>
+
+*
